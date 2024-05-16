@@ -1,75 +1,110 @@
-import React, { useEffect, useState } from 'react'
-import OwlCarousel from 'react-owl-carousel';
-import 'owl.carousel/dist/assets/owl.carousel.css';
-import 'owl.carousel/dist/assets/owl.theme.default.css';
-import {getTestimonial} from "../Store/ActionCreators/TestimonialActionCreators"
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import Breadcrum from "../../Breadcrum";
+import Sidebar from "../Sidebar";
+import { Link } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { deleteTestimonial, getTestimonial } from "../../../Store/ActionCreators/TestimonialActionCreators";
 
 export default function Testimonial() {
-    let [data,setData] = useState([])
-    let dispatch=useDispatch()
-    let TestimonialStateData= useSelector(state=>state.TestimonialStateData)
-    let options = {
-        loop:true,
-        margin:15,
-        autoplay:true,
-        autoplaySpeed:1000,
-        speed:10,
-        responsiveRefreshRate:1000,
-        dots:false,
-        navText:["<button style='border:none;background-color:blue;color:white;border-radius:50%;width:50px;height:50px'><i className='fa fa-arrow-right text-light'></button>","<button style='border:none;background-color:blue;color:white;border-radius:50%;width:50px;height:50px'><i className='fa fa-arrow-left'></button>"],
-        responsive:{
-            0:{
-                items:1
-            },
-            768:{
-                items:2
-            },
-            1080:{
-                items:3
-            },
-            1920:{
-                items:4
-            }
-        }
+  let [data, setData] = useState([]);
+  let dispatch=useDispatch()
+  let TestimonialStateData=useSelector(state=>state.TestimonialStateData)
+  const columns = [
+    { field: "id", headerName: "ID", width: 90 },
+    {
+      field: "name",
+      headerName: "Name",
+      width: 150,
+      editable: true,
+    },
+    {
+      field: "pic",
+      headerName: "Pic",
+      width: 70,
+      editable: false,
+      renderCell:({row})=><a href={`/img/${row.pic}`} target="_blank" rel='noreferrer'>
+        <img src={`/img/${row.pic}`} height={50} width={50}/>
+      </a>
+    },
+    {
+      field: "star",
+      headerName: "Star",
+      width: 50,
+      editable:true,
+    },
+    {
+      field: "message",
+      headerName: "Message",
+      width: 250,
+      editable:true,
+    },
+    {
+      field: "edit",
+      headerName: "Edit",
+      width: 70,
+      sortable:false,
+      renderCell:({row})=><Link to={`/admin/testimonial/update/${row.id}`} className='btn btn-primary'><i className='fa fa-edit'></i></Link>
+    },
+    {
+      field: "delete",
+      headerName: "Delete",
+      width: 70,
+      sortable:false,
+      renderCell:({row})=><button className='btn btn-danger' onClick={()=>deleteRecord(row.id)}><i className='fa fa-trash'></i></button>
     }
-    function getAPIData(){
-        dispatch(getTestimonial())
-        if(TestimonialStateData.length)
-        setData(TestimonialStateData)
+  ];
+  function deleteRecord(id) {
+    if (window.confirm("Are You Sure to Delete that Item :")) {
+      dispatch(deleteTestimonial({id:id}))
+      getAPIData();
     }
-    useEffect(()=>{
-    getAPIData()   
-},[TestimonialStateData.length])
+  }
+  function getAPIData() {
+    dispatch(getTestimonial())
+    if(TestimonialStateData.length)
+    setData(TestimonialStateData)
+  }
+  useEffect(() => {
+    getAPIData()
+  }, [TestimonialStateData.length]);
   return (
     <>
-       <div className="container-xxl py-2">
-        <div className="container">
-            <div className="text-center mx-auto wow fadeInUp" data-wow-delay="0.1s" style={{maxWidth:'600px'}}>
-                
-                <h3 className="my-3">What Our Clients Say!</h3>
-            </div>
-            <OwlCarousel className='owl-theme' {...options} nav>
-                {
-                   data.map((item,index)=>{
-                    return <div className="testimonial-item" key={index}>
-                    <div className="testimonial-text border rounded p-4 pt-5 mb-5">
-                        <div className="btn-square bg-white border rounded-circle">
-                            <i className="fa fa-quote-right fa-2x text-primary"></i>
-                        </div>
-                        <div className='testimonial-message'>
-                        {item.message}
-                        </div>
-                    </div>
-                    <img className="" style={{height:80,width:80,margin:"auto",borderRadius:"50%"}} src={`/img/${item.pic}`} alt=""/>
-                    <h4>{item.name}</h4>
-                    
-                </div>
-                })
-                }
-            </OwlCarousel>
+      <Breadcrum title="Admin" />
+      <div className="container-fluid">
+        <div className="row">
+          <div className="col-3">
+            <Sidebar />
+          </div>
+          <div className="col-9">
+            <h5 className="bg-primary text-light text-center p-2">
+              Testimonial{" "}
+              <Link
+                to="/admin/Testimonial/create"
+                className="float-end text-light"
+              >
+                <i className="fa fa-plus"></i>
+              </Link>
+            </h5>
+          
+            <DataGrid
+              rows={data}
+              columns={columns}
+              initialState={{
+                pagination: {
+                  paginationModel: {
+                    pageSize: 5,
+                  },
+                },
+              }}
+              pageSizeOptions={[5,10,50,100]}
+              checkboxSelection={false}
+              disableRowSelectionOnClick
+            />
+            <div className="table-responsive"></div>
+          </div>
         </div>
-    </div>
+      </div>
     </>
-  )
+  );
 }
